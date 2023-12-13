@@ -1,20 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -28,8 +28,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
+    <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -41,9 +42,10 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
+    <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -54,50 +56,56 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.2.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.6.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\basic\viwo_common.props" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\basic\viwo_common.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(WorkspaceDir)\bin64\</OutDir>
+    <IntDir>$(WorkspaceDir)\..\tmp\$(ProjectName)\$(Platform)$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(WorkspaceDir)\bin64\</OutDir>
     <IntDir>$(WorkspaceDir)\..\tmp\$(ProjectName)\$(Platform)$(Configuration)\</IntDir>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;PHYSIKASYSTEM_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;PHYSIKASYSTEM_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
@@ -124,17 +132,42 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;PHYSIKASYSTEM_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG;_WINDOWS;PHYSIKASYSTEM_EXPORTS;GLM_ENABLE_EXPERIMENTAL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(WorkspaceDir)include\TinyGLUtils;$(WorkspaceDir)include\MiniCore;$(WorkspaceDir)include\VPEinfra;$(WorkspaceDir)include\MTTerrainSdk;$(WorkspaceDir)dependencies\Physika;$(CudaToolkitDir)\include;$(WorkspaceDir)include\VSVLink;$(WorkspaceDir)include\plugins\Plugin_RenderSystem_GL;$(WorkspaceDir)include\EditClientSdk;$(WorkspaceDir)include\plugins\App_Effect\OpenGLUtils;$(WorkspaceDir)include\ClientCore;$(WorkspaceDir)include\Interface;$(WorkspaceDir)include\SimCore;$(WorkspaceDir)include\SimpleGui;$(WorkspaceDir)include\RenderCore;$(WorkspaceDir)include\ModelBase;$(WorkspaceDir)include\ResMgr;$(WorkspaceDir)include\CameraMove;$(WorkspaceDir)include\CameraBase;$(WorkspaceDir)include\RenderEngine;$(WorkspaceDir)include\SceneMgr;$(WorkspaceDir)include\TraceMover;$(WorkspaceDir)include\SelectionMgr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <OptimizeReferences>false</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>$(CudaToolkitDir)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>PaCore-2.2.1.lib;PaFramework-2.2.1.lib;PaHeightField-2.2.1.lib;PaParticleSystem-2.2.1.lib;PaRigidBody-2.2.1.lib;PaSand-2.2.1.lib;PaIO-2.2.1.lib;PaGlutGUI-2.2.1.lib;freeglut.lib;cudadevrt.lib;cudart_static.lib;imgui.lib;gdi32.lib;zlib.lib;libdb181.lib;libconfig++.lib;FreeImage$(LibSuffix).lib;FreeImagePlus.lib;glew32.lib;opengl32.lib;glu32.lib;glut32.lib;LiteUnzip.lib;LiteZip.lib;squish.lib;assimp.lib;cvars.lib;GLConsole.lib;gdal_i.lib;libnoise.lib;VPEinfra.lib;TinyGLUtils.lib;MiniCore.lib;ClientCore.lib;EditClientSdk.lib;VSVLink.lib;SelectionMgr.lib;SimCore.lib;RenderCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(WorkspaceDir)\lib\modules\$(TargetName).pdb</ProgramDatabaseFile>
+      <ImportLibrary>$(WorkspaceDir)\lib\modules\$(TargetName).lib</ImportLibrary>
     </Link>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_52,sm_52</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -147,7 +180,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(WorkspaceDir)include\TinyGLUtils;$(WorkspaceDir)include\MiniCore;$(WorkspaceDir)include\VPEinfra;$(WorkspaceDir)include\MTTerrainSdk;$(WorkspaceDir)dependencies\Physika;$(CudaToolkitDir)\include;$(WorkspaceDir)include\VSVLink;$(WorkspaceDir)include\plugins\Plugin_RenderSystem_GL;$(WorkspaceDir)include\EditClientSdk;$(WorkspaceDir)include\plugins\App_Effect\OpenGLUtils;$(WorkspaceDir)include\ClientCore;$(WorkspaceDir)include\Interface;$(WorkspaceDir)include\SimCore;$(WorkspaceDir)include\SimpleGui;$(WorkspaceDir)include\RenderCore;$(WorkspaceDir)include\ModelBase;$(WorkspaceDir)include\ResMgr;$(WorkspaceDir)include\CameraMove;$(WorkspaceDir)include\CameraBase;$(WorkspaceDir)include\RenderEngine;$(WorkspaceDir)include\SceneMgr;$(WorkspaceDir)include\TraceMover;$(WorkspaceDir)include\SelectionMgr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WorkspaceDir)include\TinyGLUtils;$(WorkspaceDir)include\MiniCore;$(WorkspaceDir)include\VPEinfra;$(WorkspaceDir)include\MTTerrainSdk;$(WorkspaceDir)dependencies\Physika;$(CudaToolkitDir)\include;$(WorkspaceDir)include\VSVLink;$(WorkspaceDir)include\plugins\Plugin_RenderSystem_GL;$(WorkspaceDir)include\EditClientSdk;$(WorkspaceDir)include\plugins\App_Effect\OpenGLUtils;$(WorkspaceDir)include\ClientCore;$(WorkspaceDir)include\Interface\RenderEngine;$(WorkspaceDir)include\Interface;$(WorkspaceDir)include\SimCore;$(WorkspaceDir)include\SimpleGui;$(WorkspaceDir)include\RenderCore;$(WorkspaceDir)include\ModelBase;$(WorkspaceDir)include\ResMgr;$(WorkspaceDir)include\CameraMove;$(WorkspaceDir)include\CameraBase;$(WorkspaceDir)include\RenderEngine;$(WorkspaceDir)include\SceneMgr;$(WorkspaceDir)include\TraceMover;$(WorkspaceDir)include\SelectionMgr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <Optimization>Disabled</Optimization>
@@ -165,7 +198,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>$(CudaToolkitDir)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>PaCore-2.2.1.lib;PaFramework-2.2.1.lib;PaHeightField-2.2.1.lib;PaParticleSystem-2.2.1.lib;PaRigidBody-2.2.1.lib;PaSand-2.2.1.lib;PaIO-2.2.1.lib;PaGlutGUI-2.2.1.lib;freeglut.lib;cudadevrt.lib;cudart_static.lib;imgui_dll.lib;gdi32.lib;zlib.lib;libdb181.lib;libconfig++.lib;FreeImage$(LibSuffix).lib;FreeImagePlus.lib;glew32.lib;opengl32.lib;glu32.lib;glut32.lib;LiteUnzip.lib;LiteZip.lib;squish.lib;assimp.lib;cvars.lib;GLConsole.lib;gdal_i.lib;libnoise.lib;VPEinfra.lib;TinyGLUtils.lib;MiniCore.lib;ClientCore.lib;EditClientSdk.lib;VSVLink.lib;SelectionMgr.lib;SimCore.lib;RenderCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PaCore-2.2.1.lib;PaFramework-2.2.1.lib;PaHeightField-2.2.1.lib;PaParticleSystem-2.2.1.lib;PaRigidBody-2.2.1.lib;PaSand-2.2.1.lib;PaIO-2.2.1.lib;PaGlutGUI-2.2.1.lib;freeglut.lib;cudadevrt.lib;cudart_static.lib;imgui.lib;gdi32.lib;zlib.lib;libdb181.lib;libconfig++.lib;FreeImage$(LibSuffix).lib;FreeImagePlus.lib;glew32.lib;opengl32.lib;glu32.lib;glut32.lib;LiteUnzip.lib;LiteZip.lib;squish.lib;assimp.lib;cvars.lib;GLConsole.lib;gdal_i.lib;libnoise.lib;VPEinfra.lib;TinyGLUtils.lib;MiniCore.lib;ClientCore.lib;EditClientSdk.lib;VSVLink.lib;SelectionMgr.lib;SimCore.lib;RenderCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(WorkspaceDir)\lib\modules\$(TargetName).pdb</ProgramDatabaseFile>
       <ImportLibrary>$(WorkspaceDir)\lib\modules\$(TargetName).lib</ImportLibrary>
     </Link>
@@ -174,9 +207,12 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_52,sm_52</CodeGeneration>
     </CudaCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CarGroundCondition.h" />
     <ClInclude Include="PhyCommandDecoder.h" />
     <ClInclude Include="PhysiKaConfig.h" />
     <ClInclude Include="PhysiKaNetData.h" />
@@ -184,13 +220,15 @@
     <ClInclude Include="PhysiKASystem.h" />
     <ClInclude Include="PhysiKASystemPlugin.h" />
     <ClInclude Include="PhysiKASystemExport.h" />
-    <ClInclude Include="PhysIKAIntegration.h" />
-    <ClInclude Include="PolygonRegion.h" />
     <ClInclude Include="PhysIKARegisterComponents.h" />
+    <ClInclude Include="PolyRegionCalHelper.h" />
+    <ClInclude Include="Public\CarGroundCondition.h" />
+    <ClInclude Include="Public\PhysIKAIntegration.h" />
+    <ClInclude Include="Public\PolygonRegion.h" />
+    <ClInclude Include="Public\SandSimulationRegionComponent.h" />
+    <ClInclude Include="Public\ShallowSandEquationSolver.h" />
     <ClInclude Include="SandCudaUtils.h" />
     <ClInclude Include="SandRenderable.h" />
-    <ClInclude Include="SandSimulationRegionComponent.h" />
-    <ClInclude Include="ShallowSandEquationSolver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CarGroundCondition.cpp" />
@@ -201,6 +239,7 @@
     <ClCompile Include="PhysIKAIntegration.cpp" />
     <ClCompile Include="PolygonRegion.cpp" />
     <ClCompile Include="PhysIKARegisterComponents.cpp" />
+    <ClCompile Include="PolyRegionCalHelper.cpp" />
     <ClCompile Include="SandRenderable.cpp" />
     <ClCompile Include="SandSimulationRegionComponent.cpp" />
     <ClCompile Include="ShallowSandEquationSolver.cpp" />
@@ -210,6 +249,6 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.2.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.6.targets" />
   </ImportGroup>
 </Project>

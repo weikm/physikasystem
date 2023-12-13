@@ -130,6 +130,9 @@ struct SandSimulationRegionCreateInfo {
     float time_delta;
     bool enable_rigid_simulation = true;
     SandSolverAlgorithm sand_solver_algorithm = SandSolverAlgorithm::HeightField;
+    float sand_mu = 0.7;
+    float sand_drag = 0.95;
+    float sand_Rho = 1000;
 
     Vec3 center{};
     // ground height, index of data at (x, y) = height_data[y * resolution_x + x]

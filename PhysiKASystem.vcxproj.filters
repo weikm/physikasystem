@@ -23,6 +23,9 @@
     <Filter Include="Component">
       <UniqueIdentifier>{ec336eb7-4aac-4381-bc09-d1de7edd5efb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Public">
+      <UniqueIdentifier>{6eb23c28-1dac-4d98-b97e-ac004be9b0eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PhysiKaConfig.h">
@@ -49,26 +52,29 @@
     <ClInclude Include="SandRenderable.h">
       <Filter>Renderable</Filter>
     </ClInclude>
-    <ClInclude Include="SandSimulationRegionComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="ShallowSandEquationSolver.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysIKAIntegration.h">
-      <Filter>PhysiKASyetem</Filter>
-    </ClInclude>
     <ClInclude Include="SandCudaUtils.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="PolygonRegion.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="PhysIKARegisterComponents.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="CarGroundCondition.h">
+    <ClInclude Include="Public\SandSimulationRegionComponent.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\PhysIKAIntegration.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\ShallowSandEquationSolver.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\CarGroundCondition.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="PolyRegionCalHelper.h">
       <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\PolygonRegion.h">
+      <Filter>Public</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -103,6 +109,9 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="CarGroundCondition.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="PolyRegionCalHelper.cpp">
       <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>

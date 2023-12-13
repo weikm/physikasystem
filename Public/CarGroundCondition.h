@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MiniCore/Component/Serde.h"
+#include <Component/Serde.h>
 #include <SerdeGui.h>
 
 namespace VPE {

@@ -1,4 +1,4 @@
-﻿#include "PhysIKAIntegration.h"
+﻿#include "Public/PhysIKAIntegration.h"
 
 #if PHYSIKA_INTEGRATION_ENABLE_VIWO_PROFILE > 0
 #include "ViWoProfile.h"
@@ -479,6 +479,7 @@ VPE::PhysIKACar::PhysIKACar() {
 inline void ParticleSandSimulationRegion::Init(const SandSimulationRegionCreateInfo &info)  //info
 {
     //build
+    _sand_layer_thickness = info.sand_layer_thickness;
     sandinfo.nx = info.height_resolution_x;
     sandinfo.ny = info.height_resolution_y;
     sandinfo.griddl = info.grid_physical_size;
@@ -801,11 +802,12 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
     sandinfo.nx = info.height_resolution_x;
     sandinfo.ny = info.height_resolution_y;
     sandinfo.griddl = info.grid_physical_size;
-    sandinfo.mu = 0.7;
-    sandinfo.drag = 0.95;
+    sandinfo.mu = info.sand_mu;
+    sandinfo.drag = info.sand_drag;
     sandinfo.slide = 10 * sandinfo.griddl;
-    sandinfo.sandRho = 1000.0;
-    double sandParticleHeight = 0.1;
+    sandinfo.sandRho = info.sand_Rho;
+    //double sandParticleHeight = 0.1;
+    _sand_layer_thickness = info.sand_layer_thickness;
 
     landHeight.resize(sandinfo.nx * sandinfo.ny);     //land
     surfaceHeight.resize(sandinfo.nx * sandinfo.ny);  //sand surface
@@ -827,7 +829,7 @@ inline void HeightFieldSandSimulationRegion::Init(const SandSimulationRegionCrea
     {
         for (int i = 0; i < sandinfo.nx; ++i) {
             double aa = info.height_data[j * sandinfo.nx + i];
-            surfaceHeight[j * sandinfo.nx + i] = aa + 0.05f * 10;  //thick=0.05
+            surfaceHeight[j * sandinfo.nx + i] = aa + _sand_layer_thickness;  //thick=0.05
         }
     }
 
