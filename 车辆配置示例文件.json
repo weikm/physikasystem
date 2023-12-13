@@ -1,0 +1,235 @@
+{
+    "node": [
+        /* 四轮车实例 */
+        {
+            "id": 99,
+            "name": "car_body",
+            "path": "model/Car/body.fbx",
+            "geo_coord": [
+                105.555808506153, 39.212429931673, 1261
+            ],
+            "viwocar":{
+                "mass": 3000.0,
+                "max_speed": 5.0,
+                "up_dir":[0,1,0],
+                "right_dir":[1,0,0],
+                "forward_force": 10000.0,
+                "steering_speed": 1.0,
+                "steering_lower": -0.5,
+                "steering_upper": 0.5,
+                "left_wheel_id": [100, 102],
+                "right_wheel_id": [101, 103],
+                "wheel_mass": 50.0,
+                "wheel_inertia": [0.5, 0.35, 0],
+                "suspension_length": 0.2,
+                "suspension_strength": 1000000,
+                "linear_damping": 0.2,
+                "angular_damping": 0.2,
+                "particle_tail_id": 1099,
+                "chassis_collision_id": 1,
+                "wheel_collision_id": 2,
+                "chassis_collision_mask": [4, 8],
+                "wheel_collision_mask": [4, 8]
+            },
+            "children": [
+                {
+                    "id": 1099,
+                    "particleSystem": {
+                        "path": "../data/assets/particle_system/tank_tail.ps.json"
+                    },
+                    "pos": [
+                        0.47266143281012776,
+                        -0.5443059438839555,
+                        2.0503708836622538
+                    ],
+                    "euler": [
+                        0.6124974845354195,
+                        -19.02608019440556,
+                        -0.1939777280810571
+                    ],
+                    "scale": [
+                        0.6503507036722324,
+                        0.8139467972687923,
+                        0.5070803694912935
+                    ]
+                },
+                {
+                    "id": 100,
+                    "name": "car_wheel",
+                    "path": "model/Car/wheel_l.fbx",
+                    "pos": [
+                        -0.9,
+                        0.35,
+                        -2.0
+                    ]
+                },
+                {
+                    "id": 101,
+                    "name": "car_wheel",
+                    "path": "model/Car/wheel_r.fbx",
+                    "pos": [
+                        0.9,
+                        0.35,
+                        -2.0
+                    ]
+                },
+                {
+                    "id": 102,
+                    "name": "car_wheel",
+                    "path": "model/Car/wheel_l.fbx",
+                    "pos": [
+                        -0.9,
+                        0.35,
+                        1.2
+                    ]
+                },
+                {
+                    "id": 103,
+                    "name": "car_wheel",
+                    "path": "model/Car/wheel_r.fbx",
+                    "pos": [
+                        0.9,
+                        0.35,
+                        1.2
+                    ]
+                }
+            ]
+        },
+        /* 八轮车(坦克)示例 */
+        {
+            "id": 3699,
+            "name": "car_body",
+            "path": "model/Tank/body.obj",
+            "geo_coord": [
+                105.555676618209, 39.212310166277, 1260.68490670
+            ],
+            "viwocar":{
+                "mass": 4000.0,
+                "max_speed": 5.0,
+                "up_dir":[0,1,0],
+                "right_dir":[1,0,0],
+                "forward_force": 10000.0,
+                "steering_speed": 1.0,
+                "steering_lower": -0.5,
+                "steering_upper": 0.5,
+                "left_wheel_id": [6100, 6102, 6104, 6106],
+                "right_wheel_id": [6101, 6103, 6105, 6107],
+                "wheel_mass": 50.0,
+                "wheel_inertia": [0.5, 0.4, 0],
+                "linear_damping": 0.8,
+                "angular_damping": 0.8,
+                "suspension_length": 0.05,
+                "suspension_strength": 1000000,
+                "particle_tail_id": 6099,
+                "chassis_collision_id": 4,
+                "wheel_collision_id": 8,
+                "chassis_collision_mask": [1, 2],
+                "wheel_collision_mask": [1, 2]
+            },
+            "children": [
+                {
+                    "id": 6099,
+                    "particleSystem": {
+                        "path": "../data/assets/particle_system/tank_tail.ps.json"
+                    },
+                    "pos": [
+                        0.47266143281012776,
+                        -0.5443059438839555,
+                        2.0503708836622538
+                    ],
+                    "euler": [
+                        0.6124974845354195,
+                        -19.02608019440556,
+                        -0.1939777280810571
+                    ],
+                    "scale": [
+                        0.6503507036722324,
+                        0.8139467972687923,
+                        0.5070803694912935
+                    ]
+                },
+                {
+                    "id": 6100,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_l.obj",
+                    "pos": [
+                        -0.9,
+                        0.45,
+                        -2.0
+                    ]
+                },
+                {
+                    "id": 6102,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_l.obj",
+                    "pos": [
+                        -0.9,
+                        0.35,
+                        -0.9
+                    ]
+                },
+                {
+                    "id": 6104,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_l.obj",
+                    "pos": [
+                        -0.9,
+                        0.35,
+                        0.13
+                    ]
+                },
+                {
+                    "id": 6106,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_l.obj",
+                    "pos": [
+                        -0.9,
+                        0.45,
+                        1.2
+                    ]
+                },
+
+                {
+                    "id": 6101,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_r.obj",
+                    "pos": [
+                        0.9,
+                        0.45,
+                        -2.0
+                    ]
+                },
+                {
+                    "id": 6103,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_r.obj",
+                    "pos": [
+                        0.9,
+                        0.35,
+                        -0.9
+                    ]
+                },
+                {
+                    "id": 6105,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_r.obj",
+                    "pos": [
+                        0.9,
+                        0.35,
+                        0.13
+                    ]
+                },
+                {
+                    "id": 6107,
+                    "name": "car_wheel",
+                    "path": "model/Tank/wheel_r.obj",
+                    "pos": [
+                        0.9,
+                        0.45,
+                        1.2
+                    ]
+                }
+            ]
+        }
+    ]
+}
