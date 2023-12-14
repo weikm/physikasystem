@@ -3,11 +3,11 @@
 #include <vector>
 #include <VPMath.h>
 #include <Geometry/Transform.h>
-#include <Component/Serde.h>
+#include "../MiniCore/Component/Serde.h"
 #include <SerdeGui.h>
 #include <memory>
 #include "Event/MouseEventHandler.h"
-#include "Component/SerdeComponentType.h"
+#include "../MiniCore/Component/SerdeComponentType.h"
 #include <Event/KeyBoardEvent.h>
 
 #include <GLObjects.h>
@@ -43,7 +43,7 @@ private:
     GLBufferObject m_polygonBuffer{};
 };
 
-struct __declspec(dllexport) PolygonRegion : VPE::ComponentDataTrait<PolygonRegion> {
+struct PolygonRegion : VPE::ComponentDataTrait<PolygonRegion> {
     PolygonRegion();
 
     // Vertices in the local space

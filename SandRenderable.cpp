@@ -7,11 +7,11 @@
 #include "RenderSystemInterface.h"
 #include "TRenderNode.h"
 #include "ViWoRoot.h"
-#include "Public/SandSimulationRegionComponent.h"
+#include "SandSimulationRegionComponent.h"
 #include <RenderEngine/IVectorDataRender.h>
 #include "ViWoProfile.h"
 #include "OpenGLManagedFramebuffer.h"
-#include "Public/PolygonRegion.h"
+#include "PolygonRegion.h"
 
 namespace VPE {
 namespace {
@@ -106,12 +106,13 @@ void SandRenderable::Render(void *pOptions, double _time, float _deltatime) {
 
     auto world = ViWoROOT::World();
 
-    for (auto e: world->view<SandSimulationRegionComponent>()) {
+    for (auto e : world->view<SandSimulationRegionComponent>()) {
         m_frameIndex = 1 - m_frameIndex;
-        auto &region = world->get<SandSimulationRegionComponent>(e);
+        auto& region = world->get<SandSimulationRegionComponent>(e);
         if (m_sortParticles) {
             Sort(e, region);
-        } else {
+        }
+        else {
             SortCounters counters{};
             counters.quadCount = region.data->sand_particles.particle_count;
             counters.pointCount = 0;
@@ -120,6 +121,7 @@ void SandRenderable::Render(void *pOptions, double _time, float _deltatime) {
         GenerateCommands();
         Render(region);
     }
+
 }
 
 void SandRenderable::DrawDebugGui() {
@@ -263,39 +265,40 @@ void SandRenderable::Render(SandSimulationRegionComponent &region) {
     glCullFace(GL_BACK);
 
     auto render = [&](bool point_render,
-                      GLuint particle_buffer) {
-        glUseProgram(point_render ? m_sandDrawPointProgram.get()
-                                  : m_sandDrawImposterProgram.get());
-        glBindVertexArray(m_imposterVAO.get());
-        glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_drawParamBuffer.get());
-        glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_sortCounterBuffers[m_frameIndex].get());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, particle_buffer);
+        GLuint particle_buffer) {
+            glUseProgram(point_render ? m_sandDrawPointProgram.get()
+                : m_sandDrawImposterProgram.get());
+            glBindVertexArray(m_imposterVAO.get());
+            glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_drawParamBuffer.get());
+            glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_sortCounterBuffers[m_frameIndex].get());
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, particle_buffer);
 
-        SandDrawParam param{};
-        param.localToView = VPE::mat4(viewMatrix * region.SimulationLocalToWorld());
-        param.viewToHClip = VPE::mat4(projMatrix);
-        param.sandColor = region.color;
-        param.viewDirWS = normalize(VPE::vec3(camera->getDirection()));
-        param.isQuad = point_render ? 0 : 1;
-        param.particleCount = region.data->sand_particles.particle_count;
-        glBindBuffer(GL_UNIFORM_BUFFER, m_drawParamBuffer.get());
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SandDrawParam), &param);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            SandDrawParam param{};
+            param.localToView = VPE::mat4(viewMatrix * region.SimulationLocalToWorld());
+            param.viewToHClip = VPE::mat4(projMatrix);
+            param.sandColor = region.color;
+            param.viewDirWS = normalize(VPE::vec3(camera->getDirection()));
+            param.isQuad = point_render ? 0 : 1;
+            param.particleCount = region.data->sand_particles.particle_count;
+            glBindBuffer(GL_UNIFORM_BUFFER, m_drawParamBuffer.get());
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SandDrawParam), &param);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-        GLuint texes[1] = {
-            m_baseColorTex->GetTextureID(),
-        };
-        auto cmd = point_render ? POINT_DRAW_COMMAND : QUAD_DRAW_COMMAND;
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, m_drawCommandBuffers[cmd].get());
-        glBindTextures(0, std::size(texes), texes);
+            GLuint texes[1] = {
+                m_baseColorTex->GetTextureID(),
+            };
+            auto cmd = point_render ? POINT_DRAW_COMMAND : QUAD_DRAW_COMMAND;
+            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, m_drawCommandBuffers[cmd].get());
+            glBindTextures(0, std::size(texes), texes);
 
-        glDrawElementsIndirect(point_render ? GL_POINTS : GL_TRIANGLES, GL_UNSIGNED_INT, 0);
+            glDrawElementsIndirect(point_render ? GL_POINTS : GL_TRIANGLES, GL_UNSIGNED_INT, 0);
     };
 
     GLuint buf = m_sortParticles ? region.data->sand_particles.position_buffer_sorted.get()
-                                 : region.data->sand_particles.position_buffer.get();
+        : region.data->sand_particles.position_buffer.get();
     render(false, buf);
     render(true, buf);
+
 }
 
 void SandRenderable::InitImposterMesh() {

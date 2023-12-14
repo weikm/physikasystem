@@ -1,14 +1,14 @@
-#include "Public/SandSimulationRegionComponent.h"
+#include "SandSimulationRegionComponent.h"
 
 #include <random>
 
 #include "Color.h"
-#include "Component/ComponentRegistry.h"
+#include "../MiniCore/Component/ComponentRegistry.h"
 #include "ViWoRoot.h"
 #include "VectorDataRender.h"
 #include "ITerrain.h"
-#include "Public/ShallowSandEquationSolver.h"
-#include "Public/PhysIKAIntegration.h"
+#include "ShallowSandEquationSolver.h"
+#include "PhysIKAIntegration.h"
 #include "PhysiKASystemBase.h"
 #include <Framework/Framework/SceneGraph.h>
 #include <ViwoCar.h>
@@ -16,14 +16,13 @@
 
 #include "cuda_gl_interop.h"
 #include "SandCudaUtils.h"
-#include "Public/PolygonRegion.h"
+#include "PolygonRegion.h"
 #include "SandRenderable.h"
-#include "PolyRegionCalHelper.h"
+
 #include "log.h"
 #include "TerrainDef.h"
 
 namespace VPE {
-#if 1
 struct SandSimulationRegionComponentTrait : public ComponentDataTrait<SandSimulationRegionComponent> {
     static SandSimulationRegionComponent GetComponent(const DataType &data,
                                                       const DeserializeState &state) {
@@ -33,7 +32,6 @@ struct SandSimulationRegionComponentTrait : public ComponentDataTrait<SandSimula
         return comp;
     }
 };
-#endif
 
 void SandSimulationRegionComponent::InitSandTerrHeight(VPE::dvec3 reference_position)
 {
@@ -42,28 +40,56 @@ void SandSimulationRegionComponent::InitSandTerrHeight(VPE::dvec3 reference_posi
     auto grid_size = height_field->GridSize();
     double height_center = height_field->CenterHeight();
     VPE::dvec3 center = height_field->CenterPosInViwoGlobalCoord();
-    //auto particle_per_grid = /*10*/;
-    //double thickness = /*0.2*/;
+    auto particle_per_grid = 10;
+    double thickness = 0.2;
     std::vector<VPE::vec4> local_pos{};
-    local_pos.reserve(grid_size * grid_size * data->particle_per_grid);
+    local_pos.reserve(grid_size * grid_size * particle_per_grid);
 
     std::default_random_engine rng;
     std::uniform_real_distribution dist(0.0, 1.0);
-
     auto patch_to_sim = PatchToSimulationLocal();
+    
+    VPE::dvec2 left_top(height_field->GetGeoCenterPosition().x - height_field->GetGeoSize().x / 2,
+        height_field->GetGeoCenterPosition().y + height_field->GetGeoSize().y / 2);
+    VPE::dvec2 right_down(height_field->GetGeoCenterPosition().x + height_field->GetGeoSize().x / 2,
+        height_field->GetGeoCenterPosition().y - height_field->GetGeoSize().y / 2);
 
+#if 0
     for (int x = 0; x < grid_size; x++)
     {
         for (int y = 0; y < grid_size; y++)
         {
             float height = data->height_field->Data()[y * grid_size + x];
+            for (int k = 0; k < particle_per_grid; k++)
+            {
+                auto r = dist(rng) * (max_radius - min_radius) + min_radius;
+                float fx = (static_cast<float>(x) + dist(rng) - grid_size / 2.0f) * height_field->DeltaX();
+                // Notice the minus sign.
+                // The it seems y is indexed from north to south, but our local right hand coordinate's y
+                // points from south to north.
+                float fy = -(static_cast<float>(y) + dist(rng) - grid_size / 2.0f) * height_field->DeltaY();
+                float h = height + thickness * dist(rng) + r; //height + 0.2f * dist(rng);
+                VPE::dvec4 patch_pos = { fx, fy, h - height_center, 1.0 };
+                auto p = patch_to_sim * patch_pos;
+                local_pos.emplace_back(p.x, p.y, p.z, r);
+            }
+        }
+    }
+#endif // 0
+
+
+    for (int y = 0; y < grid_size; y++)
+    {
+        for (int x = 0; x < grid_size; x++)
+        {
+            float height = data->height_field->Data()[x * grid_size + y];
             for (int k = 0; k < data->particle_per_grid; k++)
             {
                 float fx = (static_cast<float>(x) + dist(rng) - grid_size / 2.0f) * height_field->DeltaX();
                 // Notice the minus sign.
                 // The it seems y is indexed from north to south, but our local right hand coordinate's y
                 // points from south to north.
-                float fy = -(static_cast<float>(y) + dist(rng) - grid_size / 2.0f) * height_field->DeltaY();
+                float fy = (static_cast<float>(y) + dist(rng) - grid_size / 2.0f) * height_field->DeltaY();
                 auto r = dist(rng) * (max_radius - min_radius) + min_radius;
                 float h = height + thickness * dist(rng) + r; //height + 0.2f * dist(rng);
                 VPE::dvec4 patch_pos = { fx, fy, h - height_center, 1.0 };
@@ -88,15 +114,17 @@ void SandSimulationRegionComponent::GetTerrHeight(const VPE::dvec3& lon_lat, VPE
     VPE::dvec3 center;
     g_coord.LongLat2GlobalCoord(centerPos, center);
     data->SetCenterPosInViwoGlobalCoord(center);
+    data->SetDeltaX(0.07);
+    data->SetDeltaY(0.07);
     data->SetGeoCenterPosition(centerPos);
-
     //height->SetGeoResolution()
-    VPE::dvec2 lon_lat_size(180.0 * data->DeltaX() * grid_size / (VIWO_EARTHRADIUS * VPE::PI),
+    VPE::dvec2 con_lat_size(180.0 * data->DeltaX() * grid_size / (VIWO_EARTHRADIUS * VPE::PI),
         180.0 * data->DeltaY() * grid_size / (VIWO_EARTHRADIUS * VPE::PI));
-    data->SetGeoSize(lon_lat_size);
+    data->SetGeoSize(con_lat_size);
+
 #if 0
-    VPE::dvec2 left_top(centerPos.x - lon_lat_size.x / 2, centerPos.y + lon_lat_size.y / 2);
-    VPE::dvec2 right_down(centerPos.x + lon_lat_size.x / 2, centerPos.y - lon_lat_size.y / 2);
+    VPE::dvec2 left_top(centerPos.x - con_lat_size.x / 2, centerPos.y + con_lat_size.y / 2);
+    VPE::dvec2 right_down(centerPos.x + con_lat_size.x / 2, centerPos.y - con_lat_size.y / 2);
     VPE::dvec2 delta = right_down - left_top;
 
     for (int x = 0; x < grid_size; x++)
@@ -104,13 +132,13 @@ void SandSimulationRegionComponent::GetTerrHeight(const VPE::dvec3& lon_lat, VPE
         for (int y = 0; y < grid_size; y++)
         {
             auto lonlat = left_top + VPE::dvec2(x, y) / VPE::dvec2(grid_size, grid_size) * delta;
-            float height = terrain->GetPreciseElevation(lonlat.x, lonlat.y, level);
+            float height = terrain->GetPreciseElevation(lonlat.x, lonlat.y, 24);
             data->WriteData(y * grid_size + x, height);
         }
     }
 #endif // 0
 
-#if 1
+#if 0
     //高度场在世界下的局部坐标系方向
     VPE::dvec3 up = VPE::normalize(center);
     VPE::dvec3 east = VPE::normalize(VPE::cross(VPE::dvec3(0, 0, 1), up));
@@ -131,16 +159,38 @@ void SandSimulationRegionComponent::GetTerrHeight(const VPE::dvec3& lon_lat, VPE
         center_temp = center_temp + data->DeltaY() * grid_size * north + data->DeltaX() * east;
     }
 #endif // 0
+    //高度场在世界下的局部坐标系方向
+    VPE::dvec3 up = VPE::normalize(center);
+    VPE::dvec3 east = VPE::normalize(VPE::cross(VPE::dvec3(0, 0, 1), up));
+    VPE::dvec3 north = VPE::normalize(VPE::cross(up, east));
+
+    VPE::dvec3 center_temp = center - (data->DeltaX() * grid_size / 2) * east -
+        (data->DeltaY() * grid_size / 2) * north;
+    for (int y = 0; y < grid_size; y++)
+    {
+        for (int x = 0; x < grid_size; x++)
+        {
+            double lon, lat, h;
+            g_coord.GlobalCoord2LongLat(center_temp, lon, lat, h);
+            float height = terrain->GetPreciseElevation(lon, lat, level);
+            data->WriteData(x * grid_size + y, height);
+            center_temp += data->DeltaX() * east;
+        }
+        center_temp = center_temp - data->DeltaX() * grid_size * east + data->DeltaY() * north;
+    }
 }
 
 void SandSimulationRegionComponent::UpdateHeightField(VPE::dvec3 reference_position) {
+ 
+    VPE::dvec3 pos;
+    g_coord.LongLat2GlobalCoord(reference_position.x, reference_position.y, reference_position.z, pos);
     auto terrain = ViWoROOT::GetTerrainInterface();
     auto &cached_level = data->cached_height_field_level;
     auto &cached_position = data->cached_height_field_reference_position;
-    if (!terrain || (cached_level == height_field_quad_tree_level && cached_position == reference_position 
-        && data->height_field->Row() == block_size && data->height_field->Col() == block_size)) {
+    if (!terrain || (cached_level == height_field_quad_tree_level && cached_position == reference_position)) {
         return;
     }
+    //Noted by WR 更换高程接口
     //terrain->GetDemData(reference_position, data->height_field.get(), height_field_quad_tree_level);
     cached_position = reference_position;
     cached_level = height_field_quad_tree_level;
@@ -150,7 +200,7 @@ void SandSimulationRegionComponent::UpdateHeightField(VPE::dvec3 reference_posit
 }
 
 void SandSimulationRegionComponent::DrawGizmos() {
-    DrawHeightFieldGizmos(data->height_field.get(),0.00);
+    DrawHeightFieldGizmos(data->height_field.get());
 }
 
 void SandSimulationRegionComponent::DrawDebugGui() {
@@ -224,7 +274,7 @@ void SandSimulationRegionComponent::StartSimulation(const std::vector<PhysIKARig
         heights.reserve(grid_size * grid_size);
         for (int x = 0; x < grid_size; x++) {
             for (int y = 0; y < grid_size; y++) {
-                float height = data->height_field->Data()[x * grid_size + y] - center_height;
+                float height = data->height_field->Data()[y * grid_size + x] - center_height;
                 heights.push_back(height);
             }
         }
@@ -235,7 +285,7 @@ void SandSimulationRegionComponent::StartSimulation(const std::vector<PhysIKARig
     {
         // It seems the PhysIKA sand simulation only supports square grid
         // resample the original height field to make grid square.
-        double delta = std::min(height_field->DeltaX(), height_field->DeltaY()) *2.0f;
+        double delta = std::min(height_field->DeltaX(), height_field->DeltaY()) * 3.0f;
         int resampled_x = std::ceil(grid_size * height_field->DeltaX() / delta);
         int resampled_y = std::ceil(grid_size * height_field->DeltaY() / delta);
 
@@ -282,12 +332,9 @@ void SandSimulationRegionComponent::StartSimulation(const std::vector<PhysIKARig
         region_info.height_resolution_y = resampled_y;
         region_info.grid_physical_size = delta;
         region_info.time_delta = 0.016f;
-        region_info.sand_layer_thickness = thickness;
+        region_info.sand_layer_thickness = 1.00f; //0.02f;
         region_info.rigidbodies = rb_infos;
         region_info.sand_solver_algorithm = SandSolverAlgorithm::HeightField;
-        region_info.sand_mu = sand_mu;
-        region_info.sand_drag = sand_drag;
-        region_info.sand_Rho = sand_Rho;
 
         auto world = ViWoROOT::World();
 
@@ -304,10 +351,10 @@ void SandSimulationRegionComponent::StartSimulation(const std::vector<PhysIKARig
         if (data->sand_height_buffer.isNull()) {
             data->sand_height_buffer.create();
         }
-        glNamedBufferData(data->sand_height_buffer.get(), //替换原来的glNamedBufferStorage接口
+        glNamedBufferStorage(data->sand_height_buffer.get(),
                              data->sand_height_resolution_x * data->sand_height_resolution_y * sizeof(float),
                              nullptr,
-                             GL_DYNAMIC_DRAW);
+                             GL_DYNAMIC_STORAGE_BIT);
         cudaGraphicsGLRegisterBuffer(&data->sand_height_buffer_cuda, data->sand_height_buffer.get(), cudaGraphicsRegisterFlagsNone);
 
         // particle offset buffer
@@ -315,10 +362,10 @@ void SandSimulationRegionComponent::StartSimulation(const std::vector<PhysIKARig
             data->particle_noise_buffer.create();
         }
         auto particle_count = data->sand_height_resolution_x * data->sand_height_resolution_y * data->particle_per_grid;
-        glNamedBufferData(data->particle_noise_buffer.get(),  //替换原来的glNamedBufferStorage接口
+        glNamedBufferStorage(data->particle_noise_buffer.get(),
                              particle_count * sizeof(float) * 4,
                              nullptr,
-                             GL_DYNAMIC_DRAW);
+                             GL_DYNAMIC_STORAGE_BIT);
 
         std::vector<VPE::vec4> offset{};
         offset.resize(particle_count);
@@ -419,7 +466,6 @@ void SandSimulationRegionComponent::UpdateSandParticleHeightFieldMethod(VPE::Ent
     auto mask_entity = FindParentWithPolygonRegion(entity);
     auto mask = world->try_get<PolygonRegion>(mask_entity);
 
-
     glUseProgram(UpdateParticleFromHeightProgram::Get()->Id(mask != nullptr));
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, data->sand_height_buffer.get());
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, data->sand_particles.position_buffer.get());
@@ -450,51 +496,6 @@ void SandSimulationRegionComponent::UpdateSandParticleHeightFieldMethod(VPE::Ent
 
     glDispatchCompute((resolution_x + 31) / 32, (resolution_y + 31) / 32, particle_per_grid);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-}
-
-void SandSimulationRegionComponent::UpdatePolyRegion(VPE::Entity entity)
-{
-    auto world = ViWoROOT::World();
-    auto mask_entity = FindParentWithPolygonRegion(entity);
-    auto mask = world->try_get<PolygonRegion>(mask_entity);
-
-    if (!mask) {
-        mask = new PolygonRegion();
-    }
-
-    mask->vertices.clear();
-    Transform tm_old = world->GetTransform(entity);
-    std::vector<VPE::dvec2> tmpVerts;
-    for (auto& key : poly_region) {
-        PolygonVertex vertex{};
-        VPE::vec2 ver_loc = mask->WorldToLocalPosition(tm_old.Inverse(), key);
-        vertex.position = ver_loc;
-        tmpVerts.emplace_back(ver_loc);
-    }
-
-    dvec3 pos_new = mask->LocalToWorldPosition(tm_old, PolyRegionCalHelper::getCentroid(tmpVerts));
-    world->SetPosition(entity, pos_new);
-
-    //求多边形区域外接矩形
-    VPE::dvec2 outerSquare = PolyRegionCalHelper::getBoundingSquare(tmpVerts);
-    //转为经纬度包围盒
-    VPE::dvec2 delta = outerSquare / (double)data->height_field->GridSize();
-    data->height_field->SetDeltaX(delta.x);
-    data->height_field->SetDeltaY(delta.y);
-    data->grid_physical_size = std::min(data->height_field->DeltaX(), data->height_field->DeltaY());
-
-    Transform tm_new = world->GetTransform(entity);
-    for (auto& key : poly_region) {
-        PolygonVertex vertex{};
-        VPE::vec2 ver_loc = mask->WorldToLocalPosition(tm_new.Inverse(), key);
-        vertex.position = ver_loc;
-        mask->vertices.emplace_back(vertex);
-    }
-    mask->sdf_grid_size = 0.1;
-    mask->Commit();
-
-    world->emplace_or_replace<PolygonRegion>(entity, *mask);
 }
 
 void SandSimulationRegionComponent::StepSimulation(VPE::Entity entity, double delta_time) {
@@ -530,26 +531,27 @@ VPE::dmat4 SandSimulationRegionComponent::PatchLocalToWorld() {  //
     };
 }
 
-#if 0
 void SandSimulationRegionComponent::InitSandParticles() {
+
     auto height_field = data->height_field;
     auto grid_size = height_field->GridSize();
+    auto particle_per_grid = 10;
     auto center_height = height_field->CenterHeight();
     std::vector<VPE::vec4> local_pos{};
-    local_pos.reserve(grid_size * grid_size * 1);
+    local_pos.reserve(grid_size * grid_size * particle_per_grid);
     std::default_random_engine rng;
     std::uniform_real_distribution dist(0.0, 1.0);
     auto patch_to_sim = PatchToSimulationLocal();
     for (int x = 0; x < grid_size; x++) {
         for (int y = 0; y < grid_size; y++) {
             float height = data->height_field->Data()[y * grid_size + x];
-            for (int k = 0; k < 1; k++) {
+            for (int k = 0; k < particle_per_grid; k++) {
                 float fx = (static_cast<float>(x) + dist(rng) - grid_size / 2.0f) * height_field->DeltaX();
                 // Notice the minus sign.
                 // The it seems y is indexed from north to south, but our local right hand coordinate's y
                 // points from south to north.
                 float fy = -(static_cast<float>(y) + dist(rng) - grid_size / 2.0f) * height_field->DeltaY();
-                float h = height + 0.2f * dist(rng);
+                float h = height + dist(rng); //height + 0.2f * dist(rng);
                 auto r = dist(rng) * (max_radius - min_radius) + min_radius;
                 VPE::dvec4 patch_pos = {fx, fy, h - center_height, 1.0};
                 auto p = patch_to_sim * patch_pos;
@@ -559,7 +561,7 @@ void SandSimulationRegionComponent::InitSandParticles() {
     }
     UpdateSandParticleBuffer(local_pos);
 }
-#endif
+
 void SandSimulationRegionComponent::UpdateSandParticleBuffer(const std::vector<VPE::vec4> &local_pos) {
     auto target_size = sizeof(VPE::vec4) * local_pos.size();
     auto &particles = data->sand_particles;
@@ -569,76 +571,49 @@ void SandSimulationRegionComponent::UpdateSandParticleBuffer(const std::vector<V
     }
 }
 
-void DrawHeightFieldGizmos(HeightField* height, const double& origin_h) {
-	auto gizmos = ViWoROOT::GetVectorDataRender();
-	auto left_down = height->GetBottomLeftGeoPos();
-	auto top_right = height->GetTopRightGeoPos();
-	auto alt = height->CenterHeight();
-	gizmos->DrawGeoWireBox(
-		VPE::dvec3(left_down, alt - 20.0),
-		VPE::dvec3(top_right, alt + 20.0),
-		1,
-		Color(1.0, 0.0, 0.0, 1.0));
+void DrawHeightFieldGizmos(HeightField *height) {
+    auto gizmos = ViWoROOT::GetVectorDataRender();
+    auto left_down = height->GetBottomLeftGeoPos();
+    auto top_right = height->GetTopRightGeoPos();
+    auto alt = height->CenterHeight();
+    gizmos->DrawGeoWireBox(
+        VPE::dvec3(left_down, alt - 20.0),
+        VPE::dvec3(top_right, alt + 20.0),
+        1,
+        Color(1.0, 0.0, 0.0, 1.0));
 #if 0
-	gizmos->DrawGeoGrid(left_down, top_right, alt + 5.0,
-		height->GridSize(), height->GridSize(),
-		1, Color(0.0, 1.0, 1.0, 1.0));
+    gizmos->DrawGeoGrid(left_down, top_right, alt,
+        height->GridSize(), height->GridSize(),
+        1, Color(0.0, 1.0, 1.0, 1.0));
 #endif // 0
+    int grid_size = height->GridSize();
+    VPE::dvec2 left_top(height->GetGeoCenterPosition().x - height->GetGeoSize().x / 2,
+        height->GetGeoCenterPosition().y + height->GetGeoSize().y / 2);
+    VPE::dvec2 right_down(height->GetGeoCenterPosition().x + height->GetGeoSize().x / 2,
+        height->GetGeoCenterPosition().y - height->GetGeoSize().y / 2);
+    
 
-#if 0
-	//绘制高程点
-	int grid_size = height->GridSize();
-	VPE::dvec2 left_top(height->GetGeoCenterPosition().x - height->GetGeoSize().x / 2,
-		height->GetGeoCenterPosition().y + height->GetGeoSize().y / 2);
-	VPE::dvec2 right_down(height->GetGeoCenterPosition().x + height->GetGeoSize().x / 2,
-		height->GetGeoCenterPosition().y - height->GetGeoSize().y / 2);
-
-	PointsVector pts{};
-	pts.reserve(grid_size * grid_size);
-	auto get_point = [&](int x, int y) {
-		auto delta = right_down - left_top;
-		auto lonlat = left_top + VPE::dvec2(x, y) / VPE::dvec2(grid_size, grid_size) * delta;
-		return VPE::dvec3(lonlat, height->Data()[y * grid_size + x] + 0.1);
-	};
-	for (int i = 0; i < grid_size; i++) {
-		for (int j = 0; j < grid_size; j++) {
-			pts.push_back(get_point(i, j));
-		}
-	}
-	gizmos->DrawPoints(pts, 2, Color(0.0, 1.0, 1.0, 1.0), CoordMode::kCoordWorldGeo);
-#endif // 0
-	int grid_size = height->GridSize();
-	VPE::dvec3 center = height->CenterPosInViwoGlobalCoord();
-	VPE::dvec3 up = VPE::normalize(center);
-	VPE::dvec3 east = VPE::normalize(VPE::cross(VPE::dvec3(0, 0, 1), up));
-	VPE::dvec3 north = VPE::normalize(VPE::cross(up, east));
-	VPE::dvec3 left_top = center - (height->DeltaX() * grid_size / 2) * east +
-		(height->DeltaY() * grid_size / 2) * north;
-
-	PointsVector pts{};
-	pts.reserve(grid_size * grid_size);
-	auto get_point = [&](int x, int y) {
-		VPE::dvec3 pos_global = left_top + x * height->DeltaX() * east - y * height->DeltaY() * north;
-		double lon, lat, h;
-		g_coord.GlobalCoord2LongLat(pos_global, lon, lat, h);
-        return VPE::dvec3(lon, lat, height->Data()[y * grid_size + x] + origin_h + 0.05);
-	};
-	for (int i = 0; i < grid_size; i++) {
-		for (int j = 0; j < grid_size; j++) {
-			pts.push_back(get_point(i, j));
-		}
-	}
-	gizmos->DrawPoints(pts, 2, Color(0.0, 1.0, 1.0, 1.0), CoordMode::kCoordWorldGeo);
+    PointsVector pts{};
+    pts.reserve(grid_size * grid_size);
+    auto get_point = [&](int x, int y) {
+        auto delta = right_down - left_top;
+        auto lonlat = left_top + VPE::dvec2(x, y) / VPE::dvec2(grid_size, grid_size) * delta;
+        return VPE::dvec3(lonlat, height->Data()[y * grid_size + x]+0.05);
+    };
+    for (int i = 0; i < grid_size; i++) {
+        for (int j = 0; j < grid_size; j++) {
+            pts.push_back(get_point(i, j));
+        }
+    }
+    gizmos->DrawPoints(pts, 2, Color(0.0, 1.0, 1.0, 1.0), CoordMode::kCoordWorldGeo);
 }
 
-#if 1
 void RegisterSandSimulationRegionComponent() {
     ComponentRegistry::RegisterComponentType(
         "sand_simulation_region",
         std::make_unique<SerdeComponentType<SandSimulationRegionComponent,
                                             SandSimulationRegionComponentTrait>>());
 }
-#endif
 
 void SandSimulationRegionComponent::Data::Particles::EnsureBufferSize(size_t target_size_in_bytes) {
     if (target_size_in_bytes > buffer_size) {
@@ -651,10 +626,8 @@ void SandSimulationRegionComponent::Data::Particles::EnsureBufferSize(size_t tar
         if (position_buffer_sorted.isNull()) {
             position_buffer_sorted.create();
         }
-        //glNamedBufferStorage(position_buffer.get(), target_size_in_bytes, nullptr, GL_DYNAMIC_STORAGE_BIT);
-        glNamedBufferData(position_buffer.get(), target_size_in_bytes, nullptr, GL_DYNAMIC_DRAW);
-		//glNamedBufferStorage(position_buffer_sorted.get(), target_size_in_bytes, nullptr, GL_DYNAMIC_STORAGE_BIT);
-        glNamedBufferData(position_buffer_sorted.get(), target_size_in_bytes, nullptr, GL_DYNAMIC_DRAW);
+        glNamedBufferStorage(position_buffer.get(), target_size_in_bytes, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(position_buffer_sorted.get(), target_size_in_bytes, nullptr, GL_DYNAMIC_STORAGE_BIT);
         buffer_size = target_size_in_bytes;
         cudaGraphicsGLRegisterBuffer(&position_buffer_cuda, position_buffer.get(), cudaGraphicsRegisterFlagsNone);
     }

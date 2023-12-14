@@ -1,4 +1,4 @@
-#include "Public/ShallowSandEquationSolver.h"
+#include "ShallowSandEquationSolver.h"
 #include <imgui/imgui.h>
 #include "GLShaderUtils.h"
 #include "VPMath.h"

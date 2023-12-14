@@ -7,24 +7,15 @@
 #include "PhysiKASystemBase.h"
 #include "PhysIKARegisterComponents.h"
 
-#include "cvars/CVar.h"
-
 PhysiKASystemPlugin VPEPlugin;
 
 static VPE::PhysIKASystemBase *phy_interface = 0;
-
-bool SwitchEngine(std::vector<std::string>* args)
-{
-    phy_interface->StartPause();
-    return true;
-}
 
 bool initPhysikaPluginFromConfig() {
     phy_interface = VPE::CreatePhysIKASystem();
     ViWoROOT::GetModuleManager()->RegistInternalModule(VPE::InternalModuleType::kPhysicsSystem, phy_interface);
     EventManager::RegisterHandler<KeyBoardEvent>(phy_interface);
     VPE::PhysIKARegisterComponents();
-    CVarUtils::CreateCVar("debug.switch_engine", SwitchEngine, "switch");
     return true;
 }
 
@@ -35,7 +26,6 @@ bool cleanPlugin() {
 }
 
 bool PhysiKASystemPlugin::Init(void *lpvoid) {
-    
     return initPhysikaPluginFromConfig();
 }
 

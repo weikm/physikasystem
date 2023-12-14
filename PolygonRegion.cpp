@@ -1,4 +1,4 @@
-#include "Public/PolygonRegion.h"
+#include "PolygonRegion.h"
 #include "ViWoRoot.h"
 #include <memory>
 #include "World.h"
@@ -110,7 +110,7 @@ void PolygonRegion::DrawGizmos(const VPE::Transform &local_to_world) {
 
 VPE::dvec3 PolygonRegion::LocalToWorldPosition(const VPE::Transform &local_to_world, const VPE::vec2 &p) {
     auto m = local_to_world.GetMatrix();
-    return VPE::dvec3(m * VPE::dvec4(p.x, 0.0, p.y, 1.0));
+    return VPE::dvec3(m * VPE::dvec4(p.x, 10.0, p.y, 1.0));
 }
 
 VPE::vec2 PolygonRegion::WorldToLocalPosition(const VPE::Transform &world_to_local, const VPE::dvec3 &pos) {

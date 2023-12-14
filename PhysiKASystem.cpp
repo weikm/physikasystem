@@ -5,7 +5,7 @@
 
 #include "PhysicsSystem.h"
 #include "PhysiKASystem.h"
-#include "Public/PhysIKAIntegration.h"
+#include "PhysIKAIntegration.h"
 
 #include "ViWoRoot.h"
 #include "World.h"
@@ -41,7 +41,7 @@
 #include "ViWoProfile.h"
 
 #include "SandRenderable.h"
-#include "Public/SandSimulationRegionComponent.h"
+#include "SandSimulationRegionComponent.h"
 #include "Framework/Framework/SceneGraph.h"
 #include "Dynamics/RigidBody/Vehicle/PBDCar.h"
 #include "Dynamics/RigidBody/Vehicle/MultiWheelCar.h"
@@ -53,8 +53,8 @@
 #include "Dynamics/Sand/SandSimulator.h"
 #include "RenderEngine/IVectorDataRender.h"
 
-#include "Public/PolygonRegion.h"
-#include "Public/CarGroundCondition.h"
+#include "PolygonRegion.h"
+#include "CarGroundCondition.h"
 
 static const double dis_X = 30.0;
 static const double dis_Y = 10.0;
@@ -63,6 +63,7 @@ static double dis_Factor = 1.0;
 static const int monitor_frame_rate = 60;
 
 namespace VPE {
+
 PhysIKASystem::PhysIKASystem() {
     initConfig();
 
@@ -71,6 +72,8 @@ PhysIKASystem::PhysIKASystem() {
     initMem();
 
     PolygonRegionEditState::Init();
+
+   
 }
 
 PhysIKASystem::~PhysIKASystem() {
@@ -126,7 +129,6 @@ int PhysIKASystem::OnEvent(double _curtime, double _deltatime, void *_userdata) 
     }
 
     PolygonRegion::Update();
-
     return 0;
 }
 
@@ -238,7 +240,7 @@ void PhysIKASystem::Render(void *pOptions, double _time, float _deltatime) {
 
     if (m_drawDebugGizmos) {
         for (auto &[_, height]: m_enttToHeightField) {
-            DrawHeightFieldGizmos(height.get(), m_viwoOriginGeoPosition.z);     
+            DrawHeightFieldGizmos(height.get());
         }
         auto world = ViWoROOT::World();
         for (auto e: world->view<SandSimulationRegionComponent>()) {
@@ -299,8 +301,8 @@ void PhysIKASystem::UpdateHeightField() {
             auto hfiNde = m_enttToPhyNode[car_height.first];
             auto terrain = ViWoROOT::GetTerrainInterface();
             if (terrain) {
-                //terrain->GetDemData(car_pos, height.get(), m_config.GetHeightMapPrecisionLevelInTerrainQuadTree());
                 //Noted by WR 更换高程接口
+                //terrain->GetDemData(car_pos, height.get(), m_config.GetHeightMapPrecisionLevelInTerrainQuadTree());
                 SandSimulationRegionComponent::GetTerrHeight(car_pos, height.get(), m_config.GetHeightMapPrecisionLevelInTerrainQuadTree());
             }
 
@@ -350,16 +352,16 @@ void ApplyCarEntityGroundConditions(VPE::Entity entity, CarGroundConditionFlags 
 }
 
 void ApplyPBDCarGroundConditions(PhysIKA::PBDCar *car, CarGroundConditionFlags conditions) {
-    //if (conditions & CAR_GROUND_CONDITION_SLIPPERY_BIT) {
-    //    car->set_SlipperyRate(1.5f);
-    //} else {
-    //    car->set_SlipperyRate(1.0f);
-    //}
-    //if (conditions & CAR_GROUND_CONDITION_SLOW_DOWN_BIT) {
-    //    car->set_linearVelocityDamping(0.7f);
-    //} else {
-    //    car->set_linearVelocityDamping(0.99f);
-    //}
+    if (conditions & CAR_GROUND_CONDITION_SLIPPERY_BIT) {
+        car->set_SlipperyRate(1.5f);
+    } else {
+        car->set_SlipperyRate(1.0f);
+    }
+    if (conditions & CAR_GROUND_CONDITION_SLOW_DOWN_BIT) {
+        car->set_linearVelocityDamping(0.7f);
+    } else {
+        car->set_linearVelocityDamping(0.99f);
+    }
 }
 }  // namespace
 
@@ -646,7 +648,7 @@ void PhysIKASystem::StartSimulation() {
             src_rigids.push_back(rb);
 
             PhysIKARigidBodyCreateInfo info{};
-            info.mass = rb->getMass();
+            info.mass = 1.0f;
             info.shape_path = VPE::AssetDir + "PhysIKA/chassis_cube.obj";
             info.sdf_path = VPE::AssetDir + "PhysIKA/chassis_cube.sdf";
             proxy_infos.push_back(info);
@@ -656,7 +658,7 @@ void PhysIKASystem::StartSimulation() {
             src_rigids.push_back(rb);
 
             PhysIKARigidBodyCreateInfo info{};
-            info.mass = rb->getMass();
+            info.mass = 1.0f;
             info.scale = 3.0f;
             info.shape_path = VPE::AssetDir + "PhysIKA/wheel.obj";
             info.sdf_path = VPE::AssetDir + "PhysIKA/wheel.sdf";
@@ -713,6 +715,8 @@ void PhysIKASystem::addFourWheelCar(VPE::Entity entity) {
 std::shared_ptr<PhysIKA::PBDCar> PhysIKASystem::addPBDFourWheelCar(VPE::Entity entity, std::shared_ptr<PhysIKA::PBDSolver> solver) {
     auto world = ViWoROOT::World();
     const VPE::dvec3 &car_pos = world->GetGeoPosition(entity);
+
+    const VPE::dvec3 pos_test = world->GetPosition(entity);        //test
 
     auto hfrDetectModule = applyHeightFieldDetectionModule();
     auto heightMap = std::make_shared<HeightField>(m_config.GetHeightMapSize());
@@ -836,10 +840,8 @@ void PhysIKASystem::addMultiWheelCar(VPE::Entity entity) {
     auto hfrDetectModule = applyHeightFieldDetectionModule();
     auto heightMap = std::make_shared<HeightField>(m_config.GetHeightMapSize());
     const VPE::dvec3 &car_pos = world->GetGeoPosition(entity);
-    //Noted by WR 更换高程接口
     //ViWoROOT::GetTerrainInterface()->GetDemData(car_pos, heightMap.get(), m_config.GetHeightMapPrecisionLevelInTerrainQuadTree());
     SandSimulationRegionComponent::GetTerrHeight(car_pos, heightMap.get(), m_config.GetHeightMapPrecisionLevelInTerrainQuadTree());
-
     heightMap->SetPhysicalWorldCenterElevation(m_viwoOriginGeoPosition.z);
     PhysIKA::Vector3f heightMapCenterPosInPhysiKA;
     TransfromViwoCoordToPhysiKACoord(heightMapCenterPosInPhysiKA, heightMap->CenterPosInViwoGlobalCoord());
